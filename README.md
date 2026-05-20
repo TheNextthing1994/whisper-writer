@@ -24,6 +24,20 @@ The transcription can either be done locally through the [faster-whisper Python 
 
 ## Getting Started
 
+### Quickstart — Windows (Schnellstart für Kollegen)
+
+Führe in PowerShell im Projektordner die folgenden Befehle aus, damit dein Kollege die gleiche Umgebung wie auf deinem PC erhält:
+
+```powershell
+python -m venv venv
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
+.\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+start.bat
+```
+
+Alternativ kann nach Aktivierung der virtuellen Umgebung auch `python run.py` ausgeführt werden.
+
 ### Prerequisites
 Before you can run this app, you'll need to have the following software installed:
 
