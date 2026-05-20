@@ -1,6 +1,15 @@
 import os
 import sys
 import time
+
+# Preload the local model BEFORE any Qt import to avoid PyQt5/ctranslate2 init conflict (segfault on Windows)
+from transcription import create_local_model
+from utils import ConfigManager
+ConfigManager.initialize()
+_PRELOADED_MODEL = None
+if ConfigManager.config_file_exists() and not ConfigManager.get_config_section('model_options').get('use_api'):
+    _PRELOADED_MODEL = create_local_model()
+
 from audioplayer import AudioPlayer
 from pynput.keyboard import Controller
 from PyQt5.QtCore import QObject, QProcess
@@ -12,9 +21,7 @@ from result_thread import ResultThread
 from ui.main_window import MainWindow
 from ui.settings_window import SettingsWindow
 from ui.status_window import StatusWindow
-from transcription import create_local_model
 from input_simulation import InputSimulator
-from utils import ConfigManager
 
 
 class WhisperWriterApp(QObject):
@@ -25,8 +32,6 @@ class WhisperWriterApp(QObject):
         super().__init__()
         self.app = QApplication(sys.argv)
         self.app.setWindowIcon(QIcon(os.path.join('assets', 'ww-logo.png')))
-
-        ConfigManager.initialize()
 
         self.settings_window = SettingsWindow()
         self.settings_window.settings_closed.connect(self.on_settings_closed)
@@ -50,7 +55,9 @@ class WhisperWriterApp(QObject):
 
         model_options = ConfigManager.get_config_section('model_options')
         model_path = model_options.get('local', {}).get('model_path')
-        self.local_model = create_local_model() if not model_options.get('use_api') else None
+        self.local_model = _PRELOADED_MODEL if not model_options.get('use_api') else None
+        if not model_options.get('use_api') and self.local_model is None:
+            self.local_model = create_local_model()
 
         self.result_thread = None
 
